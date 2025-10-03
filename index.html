@@ -66,10 +66,10 @@
         }
         #ui {
             position: absolute;
-            top: 10px;
-            left: 10px;
+            top: 15px; /* Increased to avoid notch */
+            left: 15px;
             color: #00FFFF;
-            font-size: clamp(16px, 5vw, 20px);
+            font-size: clamp(18px, 5.5vw, 22px); /* Slightly larger for readability */
             text-shadow: 0 0 5px #00FFFF;
         }
         #gameOver {
@@ -78,36 +78,36 @@
             left: 50%;
             transform: translate(-50%, -50%);
             color: #FF00FF;
-            font-size: clamp(24px, 6vw, 32px);
+            font-size: clamp(26px, 6.5vw, 34px);
             text-align: center;
             display: none;
             text-shadow: 0 0 10px #FF00FF;
         }
         #gameOver div {
-            font-size: clamp(14px, 3.5vw, 18px);
+            font-size: clamp(16px, 4vw, 20px);
             margin-top: 15px;
         }
         #controls {
             position: absolute;
-            bottom: 10px;
+            bottom: 15px; /* Increased to avoid home indicator */
             width: 100%;
             display: flex;
             justify-content: space-between;
-            padding: 0 10px;
-            padding-bottom: env(safe-area-inset-bottom, 10px);
-            padding-left: env(safe-area-inset-left, 10px);
-            padding-right: env(safe-area-inset-right, 10px);
+            padding: 0 15px;
+            padding-bottom: calc(15px + env(safe-area-inset-bottom, 0px));
+            padding-left: calc(15px + env(safe-area-inset-left, 0px));
+            padding-right: calc(15px + env(safe-area-inset-right, 0px));
             box-sizing: border-box;
         }
         .control-btn {
             background: rgba(0, 255, 255, 0.2);
             border: 2px solid #00FFFF;
-            border-radius: 10px;
+            border-radius: 12px;
             color: #00FFFF;
-            font-size: clamp(12px, 3vw, 14px);
-            padding: 10px;
-            width: 60px;
-            height: 60px;
+            font-size: clamp(14px, 3.5vw, 16px); /* Larger for touch */
+            padding: 12px;
+            width: 70px; /* Increased size */
+            height: 70px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -121,18 +121,18 @@
         }
         @media (max-width: 600px) {
             #ui {
-                font-size: clamp(14px, 4vw, 18px);
+                font-size: clamp(16px, 4.5vw, 20px);
             }
             #gameOver {
-                font-size: clamp(20px, 5vw, 28px);
+                font-size: clamp(22px, 5.5vw, 30px);
             }
             #gameOver div {
-                font-size: clamp(12px, 3vw, 16px);
+                font-size: clamp(14px, 3.5vw, 18px);
             }
             .control-btn {
-                width: 50px;
-                height: 50px;
-                font-size: clamp(10px, 2.5vw, 12px);
+                width: 60px;
+                height: 60px;
+                font-size: clamp(12px, 3vw, 14px);
             }
         }
     </style>
@@ -160,15 +160,20 @@
         const ctx = canvas.getContext('2d');
         const NUM_STARS = 80;
 
-        // Dynamic canvas sizing to maximize screen usage without stretching
+        // Dynamic canvas sizing to maximize screen usage
         let resizeTimeout;
         function resizeCanvas() {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
                 const dpr = window.devicePixelRatio || 1;
                 const aspectRatio = 4 / 3;
-                let width = window.innerWidth * 0.98; // Increased to 98% for larger canvas
-                let height = window.innerHeight * 0.95; // Increased to 95% for larger canvas
+                // Use full width and height with safe area adjustments
+                let width = window.innerWidth;
+                let height = window.innerHeight * 0.98; // 98% to avoid bottom safe area
+                // Apply safe area insets if available
+                const safeAreaInsetTop = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-top') || '0');
+                const safeAreaInsetBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom') || '0');
+                height -= (safeAreaInsetTop + safeAreaInsetBottom);
                 // Maintain aspect ratio to prevent stretching
                 if (width / height > aspectRatio) {
                     width = height * aspectRatio;
@@ -185,6 +190,8 @@
                 ship.y = height / 2;
                 // Reinitialize stars to match new canvas size
                 initStars();
+                // Debug output
+                console.log(`Canvas size: ${width}x${height}, DPR: ${dpr}, Logical size: ${canvas.width/dpr}x${canvas.height/dpr}`);
             }, 100);
         }
 
@@ -498,8 +505,8 @@
             for (let i = 0; i < NUM_STARS; i++) {
                 const z = Math.random();
                 stars.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
+                    x: Math.random() * (canvas.width / (window.devicePixelRatio || 1)),
+                    y: Math.random() * (canvas.height / (window.devicePixelRatio || 1)),
                     size: z * 1.5 + 1,
                     speed: z * 1.5 + 0.5,
                     alpha: z * 0.4 + 0.3
@@ -519,9 +526,11 @@
                 });
             }
             const buffer = size;
+            const logicalWidth = canvas.width / (window.devicePixelRatio || 1);
+            const logicalHeight = canvas.height / (window.devicePixelRatio || 1);
             return {
-                x: x ? x : Math.random() * (canvas.width - 2 * buffer) + buffer,
-                y: y ? y : Math.random() * (canvas.height - 2 * buffer) + buffer,
+                x: x ? x : Math.random() * (logicalWidth - 2 * buffer) + buffer,
+                y: y ? y : Math.random() * (logicalHeight - 2 * buffer) + buffer,
                 vx: (Math.random() - 0.5) * (size === 50 ? 1 : size === 25 ? 1.5 : 2),
                 vy: (Math.random() - 0.5) * (size === 50 ? 1 : size === 25 ? 1.5 : 2),
                 angle: Math.random() * Math.PI * 2,
@@ -533,27 +542,29 @@
 
         function spawnSaucer() {
             if (saucers.length > 0) return;
+            const logicalWidth = canvas.width / (window.devicePixelRatio || 1);
+            const logicalHeight = canvas.height / (window.devicePixelRatio || 1);
             const side = Math.floor(Math.random() * 4);
             let x, y, vx, vy;
             const speed = 1.5 + game.level * 0.2;
             if (side === 0) {
-                x = Math.random() * canvas.width;
+                x = Math.random() * logicalWidth;
                 y = -30;
                 vx = (Math.random() - 0.5) * 1;
                 vy = speed;
             } else if (side === 1) {
-                x = Math.random() * canvas.width;
-                y = canvas.height + 30;
+                x = Math.random() * logicalWidth;
+                y = logicalHeight + 30;
                 vx = (Math.random() - 0.5) * 1;
                 vy = -speed;
             } else if (side === 2) {
                 x = -30;
-                y = Math.random() * canvas.height;
+                y = Math.random() * logicalHeight;
                 vx = speed;
                 vy = (Math.random() - 0.5) * 1;
             } else {
-                x = canvas.width + 30;
-                y = Math.random() * canvas.height;
+                x = logicalWidth + 30;
+                y = Math.random() * logicalHeight;
                 vx = -speed;
                 vy = (Math.random() - 0.5) * 1;
             }
@@ -577,11 +588,13 @@
             enemyBullets.length = 0;
             saucerSpawnTimer = 0;
             const numAsteroids = 3 + game.level;
+            const logicalWidth = canvas.width / (window.devicePixelRatio || 1);
+            const logicalHeight = canvas.height / (window.devicePixelRatio || 1);
             for (let i = 0; i < numAsteroids; i++) {
                 let x, y;
                 do {
-                    x = Math.random() * (canvas.width - 100) + 50;
-                    y = Math.random() * (canvas.height - 100) + 50;
+                    x = Math.random() * (logicalWidth - 100) + 50;
+                    y = Math.random() * (logicalHeight - 100) + 50;
                 } while (Math.hypot(x - ship.x, y - ship.y) < 150);
                 asteroids.push(createAsteroid(x, y, 50));
             }
@@ -696,10 +709,12 @@
 
         function wrap(obj) {
             const buffer = obj.size || obj.radius || 0;
-            if (obj.x < -buffer) obj.x = canvas.width + buffer;
-            if (obj.x > canvas.width + buffer) obj.x = -buffer;
-            if (obj.y < -buffer) obj.y = canvas.height + buffer;
-            if (obj.y > canvas.height + buffer) obj.y = -buffer;
+            const logicalWidth = canvas.width / (window.devicePixelRatio || 1);
+            const logicalHeight = canvas.height / (window.devicePixelRatio || 1);
+            if (obj.x < -buffer) obj.x = logicalWidth + buffer;
+            if (obj.x > logicalWidth + buffer) obj.x = -buffer;
+            if (obj.y < -buffer) obj.y = logicalHeight + buffer;
+            if (obj.y > logicalHeight + buffer) obj.y = -buffer;
         }
 
         function checkCollision(x1, y1, r1, x2, y2, r2) {
@@ -727,11 +742,12 @@
         }
 
         function updateStars() {
+            const logicalHeight = canvas.height / (window.devicePixelRatio || 1);
             for (let star of stars) {
                 star.y += star.speed;
-                if (star.y > canvas.height) {
+                if (star.y > logicalHeight) {
                     star.y = 0;
-                    star.x = Math.random() * canvas.width;
+                    star.x = Math.random() * (canvas.width / (window.devicePixelRatio || 1));
                 }
             }
         }
@@ -781,8 +797,10 @@
 
             if ((keys['ArrowDown'] || touchControls.hyper) && !touchControls.hyperUsed) {
                 playHyperspaceSound();
-                ship.x = Math.random() * canvas.width;
-                ship.y = Math.random() * canvas.height;
+                const logicalWidth = canvas.width / (window.devicePixelRatio || 1);
+                const logicalHeight = canvas.height / (window.devicePixelRatio || 1);
+                ship.x = Math.random() * logicalWidth;
+                ship.y = Math.random() * logicalHeight;
                 ship.vx = 0;
                 ship.vy = 0;
                 touchControls.hyper = false;
@@ -831,7 +849,9 @@
                 const saucer = saucers[i];
                 saucer.x += saucer.vx;
                 saucer.y += saucer.vy;
-                if (saucer.x < -50 || saucer.x > canvas.width + 50 || saucer.y < -50 || saucer.y > canvas.height + 50) {
+                const logicalWidth = canvas.width / (window.devicePixelRatio || 1);
+                const logicalHeight = canvas.height / (window.devicePixelRatio || 1);
+                if (saucer.x < -50 || saucer.x > logicalWidth + 50 || saucer.y < -50 || saucer.y > logicalHeight + 50) {
                     saucers.splice(i, 1);
                     continue;
                 }
@@ -857,7 +877,9 @@
                 enemyBullet.x += enemyBullet.vx;
                 enemyBullet.y += enemyBullet.vy;
                 enemyBullet.life--;
-                if (enemyBullet.life <= 0 || enemyBullet.x < 0 || enemyBullet.x > canvas.width || enemyBullet.y < 0 || enemyBullet.y > canvas.height) {
+                const logicalWidth = canvas.width / (window.devicePixelRatio || 1);
+                const logicalHeight = canvas.height / (window.devicePixelRatio || 1);
+                if (enemyBullet.life <= 0 || enemyBullet.x < 0 || enemyBullet.x > logicalWidth || enemyBullet.y < 0 || enemyBullet.y > logicalHeight) {
                     enemyBullets.splice(i, 1);
                     continue;
                 }
