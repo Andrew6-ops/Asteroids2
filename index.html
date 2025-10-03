@@ -69,7 +69,7 @@
             top: 10px;
             left: 10px;
             color: #00FFFF;
-            font-size: clamp(16px, 5vw, 20px); /* Increased for mobile readability */
+            font-size: clamp(16px, 5vw, 20px);
             text-shadow: 0 0 5px #00FFFF;
         }
         #gameOver {
@@ -121,7 +121,7 @@
         }
         @media (max-width: 600px) {
             #ui {
-                font-size: clamp(14px, 4vw, 18px); /* Slightly larger for small screens */
+                font-size: clamp(14px, 4vw, 18px);
             }
             #gameOver {
                 font-size: clamp(20px, 5vw, 28px);
@@ -160,16 +160,16 @@
         const ctx = canvas.getContext('2d');
         const NUM_STARS = 80;
 
-        // Dynamic canvas sizing to prevent stretching
+        // Dynamic canvas sizing to maximize screen usage without stretching
         let resizeTimeout;
         function resizeCanvas() {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
                 const dpr = window.devicePixelRatio || 1;
                 const aspectRatio = 4 / 3;
-                let width = window.innerWidth * 0.95; // 95% to account for safe areas
-                let height = window.innerHeight * 0.9; // 90% of height for safe areas
-                // Maintain aspect ratio without stretching
+                let width = window.innerWidth * 0.98; // Increased to 98% for larger canvas
+                let height = window.innerHeight * 0.95; // Increased to 95% for larger canvas
+                // Maintain aspect ratio to prevent stretching
                 if (width / height > aspectRatio) {
                     width = height * aspectRatio;
                 } else {
@@ -183,6 +183,8 @@
                 // Center ship in logical coordinates
                 ship.x = width / 2;
                 ship.y = height / 2;
+                // Reinitialize stars to match new canvas size
+                initStars();
             }, 100);
         }
 
@@ -516,8 +518,7 @@
                     y: Math.sin(angle) * radius
                 });
             }
-            // Ensure asteroids spawn fully within canvas bounds
-            const buffer = size; // Buffer to keep asteroids fully on-screen
+            const buffer = size;
             return {
                 x: x ? x : Math.random() * (canvas.width - 2 * buffer) + buffer,
                 y: y ? y : Math.random() * (canvas.height - 2 * buffer) + buffer,
@@ -579,7 +580,7 @@
             for (let i = 0; i < numAsteroids; i++) {
                 let x, y;
                 do {
-                    x = Math.random() * (canvas.width - 100) + 50; // Buffer for large asteroids
+                    x = Math.random() * (canvas.width - 100) + 50;
                     y = Math.random() * (canvas.height - 100) + 50;
                 } while (Math.hypot(x - ship.x, y - ship.y) < 150);
                 asteroids.push(createAsteroid(x, y, 50));
@@ -668,15 +669,15 @@
         function drawBullet(bullet) {
             ctx.fillStyle = '#00FFFF';
             ctx.shadowColor = '#00FFFF';
-            ctx.shadowBlur = 8; // Increased for visibility
-            ctx.fillRect(bullet.x - 3, bullet.y - 1.5, 6, 3); // Larger bullet: 6x3
+            ctx.shadowBlur = 8;
+            ctx.fillRect(bullet.x - 3, bullet.y - 1.5, 6, 3);
         }
 
         function drawEnemyBullet(bullet) {
-            ctx.fillStyle = '#FF3333'; // Brighter red for better visibility
+            ctx.fillStyle = '#FF3333';
             ctx.shadowColor = '#FF3333';
-            ctx.shadowBlur = 8; // Increased for visibility
-            ctx.fillRect(bullet.x - 3, bullet.y - 1.5, 6, 3); // Larger bullet: 6x3
+            ctx.shadowBlur = 8;
+            ctx.fillRect(bullet.x - 3, bullet.y - 1.5, 6, 3);
         }
 
         function drawParticle(particle) {
@@ -694,7 +695,6 @@
         }
 
         function wrap(obj) {
-            // Adjusted to keep objects fully within canvas
             const buffer = obj.size || obj.radius || 0;
             if (obj.x < -buffer) obj.x = canvas.width + buffer;
             if (obj.x > canvas.width + buffer) obj.x = -buffer;
@@ -801,7 +801,7 @@
                     vx: Math.cos(ship.angle) * 8 + ship.vx,
                     vy: Math.sin(ship.angle) * 8 + ship.vy,
                     life: 60,
-                    radius: 3 // Increased radius for collision detection
+                    radius: 3
                 });
                 lastShot = Date.now();
             }
@@ -846,7 +846,7 @@
                         vx: Math.cos(angle + spread) * bulletSpeed,
                         vy: Math.sin(angle + spread) * bulletSpeed,
                         life: 90,
-                        radius: 3 // Increased radius for collision detection
+                        radius: 3
                     });
                     playEnemyLaserSound();
                 }
